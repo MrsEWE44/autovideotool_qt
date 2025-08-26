@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui av avwidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,6 +20,8 @@ SOURCES += \
     dialogutils.cpp \
     main.cpp \
     mainwindow.cpp \
+    mymediaplayer.cpp \
+    showlrctext.cpp \
     videotoollayout.cpp \
     videoutils.cpp
 
@@ -28,6 +30,8 @@ HEADERS += \
     coreutils.h \
     dialogutils.h \
     mainwindow.h \
+    mymediaplayer.h \
+    showlrctext.h \
     videotoollayout.h \
     videoutils.h
 
@@ -36,8 +40,10 @@ FORMS += \
 
 win32: {
     FFMPEG_HOME=E:\devel\qtproject\ffmpegtest\libs\ffmpeg
+    QTAV_HOME=D:\devel\qt_creator\5.14.1\mingw73_64
     #设置 ffmpeg 的头文件
     INCLUDEPATH += $$FFMPEG_HOME/include
+    INCLUDEPATH += $$QTAV_HOME/include
 
     #设置导入库的目录一边程序可以找到导入库
     # -L ：指定导入库的目录
@@ -51,6 +57,10 @@ win32: {
             -lpostproc \
             -lswresample \
             -lswscale
+
+    LIBS +=  -L$$QTAV_HOME/lib \
+            -lQt5AVWidgets \
+            -lQt5AV
 }
 
 # Default rules for deployment.

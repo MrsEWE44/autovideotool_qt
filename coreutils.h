@@ -8,6 +8,7 @@
 #include <QFontMetrics>
 #include <QImage>
 #include <QPainter>
+#include <QLabel>
 
 
 class CoreUtils

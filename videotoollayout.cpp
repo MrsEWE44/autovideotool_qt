@@ -27,7 +27,6 @@ void VideoToolLayout::init()
     picTextTemplateBox = new QComboBox();
     outFormatBox = new QComboBox();
     outFormatUnitBox = new QComboBox();
-    vbox = new QVBoxLayout();
     lw = new QListWidget();
     startBt = new QPushButton("开始");
     chooseOutPathBt = new QPushButton("选择输出路径");
@@ -293,12 +292,24 @@ void VideoToolLayout::connectFun()
         if(selectLocalFileListStr.isEmpty()){
             QMessageBox::critical(ww,"错误","请选择正确的音视频文件",QMessageBox::Ok);
         }else{
+            int tabwidget_index = tabWidget->currentIndex();
             for(QString s : selectLocalFileListStr){
-                QListWidgetItem *qlwitem = new QListWidgetItem(lw);
-                QCheckBox *chbox = new QCheckBox();
-                qlwitem->setText(s);
-                lw->addItem(qlwitem);
-                lw->setItemWidget(qlwitem,chbox);
+                if(tabwidget_index == 0){
+                    QListWidgetItem *qlwitem = new QListWidgetItem(lw);
+                    QCheckBox *chbox = new QCheckBox();
+                    qlwitem->setText(s);
+                    lw->addItem(qlwitem);
+                    lw->setItemWidget(qlwitem,chbox);
+                }
+
+                if(tabwidget_index == 1){
+                    QFileInfo finfo(s);
+                    QListWidgetItem *item = new QListWidgetItem();
+                    item->setText(finfo.fileName());
+                    myMediaPlayer->listWidget->addItem(item);
+                    myMediaPlayer->media_map.insert(finfo.fileName(),finfo.absoluteFilePath());
+                }
+
             }
         }
     });
@@ -314,13 +325,24 @@ void VideoToolLayout::connectFun()
                 d.setSorting(QDir::Name);
                 d.setNameFilters(QString("%1 %2").arg(videoFillterStr,audioFillterStr).split(" "));
                 QFileInfoList qfil = d.entryInfoList();
+                int tabwidget_index = tabWidget->currentIndex();
                 for(QFileInfo f : qfil){
-                    QListWidgetItem *qlwitem = new QListWidgetItem(lw);
-                    QCheckBox *chbox = new QCheckBox();
-                    qlwitem->setText(f.absoluteFilePath());
-                    lw->addItem(qlwitem);
-                    lw->setItemWidget(qlwitem,chbox);
-                    lw->setItemAlignment(Qt::AlignHCenter);
+                    if(tabwidget_index == 0){
+                        QListWidgetItem *qlwitem = new QListWidgetItem(lw);
+                        QCheckBox *chbox = new QCheckBox();
+                        qlwitem->setText(f.absoluteFilePath());
+                        lw->addItem(qlwitem);
+                        lw->setItemWidget(qlwitem,chbox);
+                        lw->setItemAlignment(Qt::AlignHCenter);
+                    }
+
+                    if(tabwidget_index == 1){
+                        QListWidgetItem *item = new QListWidgetItem();
+                        item->setText(f.fileName());
+                        myMediaPlayer->listWidget->addItem(item);
+                        myMediaPlayer->media_map.insert(f.fileName(),f.absoluteFilePath());
+
+                    }
                 }
             }
         }
@@ -328,11 +350,12 @@ void VideoToolLayout::connectFun()
 
     QObject::connect(helpOpenA,&QAction::triggered,[=]{
         QMessageBox::information(ww,"帮助","视频自动化工具\r\n\r\n"
-                                         "该软件的界面、功能是由qt5+ffmpeg实现.\r\n\r\n"
+                                         "该软件的界面、功能是由qt5+ffmpeg7.0+ffmpeg5.x+QtAV实现.\r\n\r\n"
                                          "主要是用来编辑音视频的,支持批量自动化剪辑、提取音视频、转码等功能.\r\n\r\n"
                                          "在剪辑视频的时候，支持自定义视频封面、输出的视频格式、插入封面文字、封面文字位置.\r\n\r\n"
                                          "提取音频文件的时候,支持选择输出的音频格式.\r\n\r\n"
-                                         "转码音视频文件的时候，支持选择输出的音视频格式.\r\n\r\n",QMessageBox::Ok);
+                                         "转码音视频文件的时候，支持选择输出的音视频格式.\r\n\r\n"
+                                         "音视频播放、歌词解析、播放进度调整都是由QtAV实现.\r\n\r\n",QMessageBox::Ok);
     });
 
 
@@ -355,72 +378,54 @@ void VideoToolLayout::showLayout()
     init();
     if(check() == 0){
         ww = new QWidget();
+        ww1 = new QWidget();
+        ww2 = new QWidget();
+        tabWidget = new QTabWidget(ww);
         m->setWindowTitle("视频自动化工具");
         m->setCentralWidget(ww);
         m->close();
-        vbox2 = new QVBoxLayout();
+
+        vbox = new QVBoxLayout();
+        QVBoxLayout *vbox2 = new QVBoxLayout();
         QHBoxLayout *hbox = new QHBoxLayout();
-        vbox2->addLayout(addHboxWidget(choiceBox,modeBox));
-        vbox2->addLayout(addHboxWidget(cutTime,cutTimeEdit,timeUnitBox));
-        vbox2->addLayout(addHboxWidget(picPath,picPathEdit,choosePicPathBt));
+        vbox2->addLayout(addHboxWidget({choiceBox,modeBox}));
+        vbox2->addLayout(addHboxWidget({cutTime,cutTimeEdit,timeUnitBox}));
+        vbox2->addLayout(addHboxWidget({picPath,picPathEdit,choosePicPathBt}));
         QVBoxLayout *vboxt = new QVBoxLayout();
         QHBoxLayout *hboxt = new QHBoxLayout();
-        vboxt->addLayout(addHboxWidget(picFontLocation,picBox));
+        vboxt->addLayout(addHboxWidget({picFontLocation,picBox}));
         vboxt->addWidget(picTextEdit);
         vboxt->addWidget(initStartCountEdit);
-        vboxt->addLayout(addHboxWidget(picTextUnitBox,picTextTemplateBox));
-        vboxt->addLayout(addHboxWidget(chooseColorBt,chooseFontStyleBt));
+        vboxt->addLayout(addHboxWidget({picTextUnitBox,picTextTemplateBox}));
+        vboxt->addLayout(addHboxWidget({chooseColorBt,chooseFontStyleBt}));
         vboxt->addWidget(previewPicBt);
         hboxt->addWidget(picLabel);
         hboxt->addLayout(vboxt);
         vbox2->addLayout(hboxt);
-        vbox2->addLayout(addHboxWidget(outFormat,outFormatBox,outFormatUnitBox));
-        vbox2->addLayout(addHboxWidget(outPath,outPathEdit,chooseOutPathBt));
+        vbox2->addLayout(addHboxWidget({outFormat,outFormatBox,outFormatUnitBox}));
+        vbox2->addLayout(addHboxWidget({outPath,outPathEdit,chooseOutPathBt}));
         hbox->addWidget(lw);
         hbox->addLayout(vbox2);
         vbox->addLayout(hbox);
         vbox->addWidget(startBt);
-        ww->setLayout(vbox);
+        ww1->setLayout(vbox);
+        myMediaPlayer = new MyMediaPlayer(ww);
+        tabWidget->addTab(ww1,"音视频自动化工具");
+//        tabWidget->addTab(ww2,"音视频播放工具");
+        tabWidget->addTab(myMediaPlayer,"音视频播放工具");
+        QVBoxLayout *vbox3 = new QVBoxLayout();
+        vbox3->addWidget(tabWidget);
+        ww->setLayout(vbox3);
     }
 }
 
-QHBoxLayout *VideoToolLayout::addHboxWidget(QWidget *w1, QWidget *w2)
+QHBoxLayout *VideoToolLayout::addHboxWidget(QList<QWidget *> w1)
 {
     QHBoxLayout *hbox = new QHBoxLayout();
-    hbox->addWidget(w1);
-    hbox->addWidget(w2);
+    foreach(QWidget *w , w1){
+        hbox->addWidget(w);
+    }
     return hbox;
-}
-
-QHBoxLayout* VideoToolLayout::addHboxWidget(QWidget *w1, QWidget *w2, QWidget *w3,QWidget *w4)
-{
-    QHBoxLayout *hbox = new QHBoxLayout();
-    QHBoxLayout *hbox1 = new QHBoxLayout();
-    hbox->addWidget(w1);
-    hbox->addWidget(w2);
-    hbox->setAlignment(Qt::AlignLeft);
-    hbox1->addLayout(hbox);
-    hbox = new QHBoxLayout();
-    hbox->addWidget(w3);
-    hbox->addWidget(w4);
-    hbox->setAlignment(Qt::AlignLeft);
-    hbox1->addLayout(hbox);
-    return hbox1;
-}
-
-QHBoxLayout* VideoToolLayout::addHboxWidget(QWidget *w1, QWidget *w2, QWidget *w3)
-{
-    QHBoxLayout *hbox = new QHBoxLayout();
-    hbox->addWidget(w1);
-    hbox->addWidget(w2);
-    hbox->addWidget(w3);
-    hbox->setAlignment(Qt::AlignLeft);
-    return hbox;
-}
-
-void VideoToolLayout::insertHboxWidget(int index, QWidget *w1, QWidget *w2)
-{
-    vbox2->insertLayout(index,addHboxWidget(w1,w2));
 }
 
 QString VideoToolLayout::getPicTextTemplateBoxStr(int i)
@@ -461,3 +466,4 @@ void VideoToolLayout::setWidgetFixedSize(QList<QWidget *> l, int isEnable)
         w->setEnabled(isEnable == 0);
     }
 }
+

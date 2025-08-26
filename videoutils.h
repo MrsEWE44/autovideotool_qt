@@ -159,7 +159,6 @@ public:
     */
     void insertPicToVideo(QString picPath , QString videoInputPath , QString videoOutPath);
 
-
 };
 
 #endif // VIDEOUTILS_H
